@@ -72,6 +72,34 @@ class AttendanceViewModel @Inject constructor(
             }
         }
     }
+    // Add to AttendanceViewModel:
+    fun recordBulkDailyAttendance(
+        date: LocalDate,
+        classSectionId: Int,
+        records: List<Map<String, Any>>
+    ) {
+        bulkRecordDailyAttendance(date, classSectionId, records)
+    }
+
+    fun recordBulkCourseAttendance(
+        date: LocalDate,
+        classSectionId: Int,
+        courseOfferingId: Int,
+        records: List<Map<String, Any>>
+    ) {
+        // Implement or adapt to existing functions
+        viewModelScope.launch {
+            try {
+                _loading.value = true
+                _error.value = null
+                // Call repository method or adapt to existing methods
+            } catch (e: Exception) {
+                _error.value = e.message
+            } finally {
+                _loading.value = false
+            }
+        }
+    }
 
     fun bulkRecordDailyAttendance(
         date: LocalDate,

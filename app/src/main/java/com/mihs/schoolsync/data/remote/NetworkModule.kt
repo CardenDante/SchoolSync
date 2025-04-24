@@ -14,7 +14,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
-    // Keep your current IP address, but add a longer timeout
     private const val BASE_URL = "http://192.168.100.22:8000/api/v1/"
 
     @Provides
@@ -34,7 +33,6 @@ object NetworkModule {
         return OkHttpClient.Builder()
             .addInterceptor(loggingInterceptor)
             .addInterceptor(authInterceptor)
-            // Add timeouts to prevent hanging on network requests
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
@@ -53,17 +51,27 @@ object NetworkModule {
             .build()
     }
 
-    // Add this method to provide UserApiService
     @Provides
     @Singleton
     fun provideUserApiService(retrofit: Retrofit): UserApiService {
         return retrofit.create(UserApiService::class.java)
     }
 
-    // Add API service for StudentApiService
     @Provides
     @Singleton
     fun provideStudentApiService(retrofit: Retrofit): StudentApiService {
         return retrofit.create(StudentApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideClassApiService(retrofit: Retrofit): ClassApiService {
+        return retrofit.create(ClassApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideCourseApiService(retrofit: Retrofit): CourseApiService {
+        return retrofit.create(CourseApiService::class.java)
     }
 }

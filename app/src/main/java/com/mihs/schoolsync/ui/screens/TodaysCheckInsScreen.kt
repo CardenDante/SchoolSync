@@ -4,6 +4,11 @@ package com.mihs.schoolsync.ui.screens
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -14,6 +19,7 @@ import com.mihs.schoolsync.ui.viewmodel.AttendanceViewModel
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TodaysCheckInsScreen(
     navigateBack: () -> Unit,
@@ -222,6 +228,5 @@ fun CheckInListItem(checkIn: Map<String, Any>) {
                 }
             }
         }
-
     }
 }

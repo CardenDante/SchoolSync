@@ -23,11 +23,9 @@ import com.mihs.schoolsync.ui.components.CourseTabs
 import com.mihs.schoolsync.ui.viewmodel.AttendanceViewModel
 import com.mihs.schoolsync.ui.viewmodel.ClassViewModel
 import com.mihs.schoolsync.ui.viewmodel.CourseViewModel
-import com.mihs.schoolsync.utils.toJavaLocalDate
-import com.mihs.schoolsync.utils.toThreetenLocalDate
-import org.threeten.bp.LocalDate
-import org.threeten.bp.YearMonth
-import org.threeten.bp.format.DateTimeFormatter
+import java.time.LocalDate
+import java.time.YearMonth
+import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,38 +40,67 @@ fun ClassAttendanceScreen(
 ) {
     val classSection by classViewModel.classSection.collectAsState()
     val courses by courseViewModel.classCourses.collectAsState()
-    val classAttendanceData by attendanceViewModel.classAttendance.collectAsState() // Changed from classAttendanceMonthly
+    val rawAttendanceData by attendanceViewModel.classAttendance.collectAsState()
     val loading by attendanceViewModel.loading.collectAsState()
     val error by attendanceViewModel.error.collectAsState()
 
+    val classAttendanceData = remember(rawAttendanceData) {
+        val result = mutableMapOf<LocalDate, Map<String, Any>>()
+        rawAttendanceData.forEach { (key, value) ->
+            try {
+                val parts = key.toString().split("-")
+                if (parts.size == 3) {
+                    val year = parts[0].toInt()
+                    val month = parts[1].toInt()
+                    val day = parts[2].toInt()
+                    val date = LocalDate.of(year, month, day)
+                    result[date] = value as Map<String, Any>
+                }
+            } catch (e: Exception) {
+                // Handle parsing error
+            }
+        }
+        result
+    }
+
     var selectedMonth by remember { mutableStateOf(YearMonth.now()) }
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
-    var selectedViewType by remember { mutableStateOf("calendar") } // "calendar" or "list"
+    var selectedViewType by remember { mutableStateOf("calendar") }
     var selectedCourseId by remember { mutableStateOf<Int?>(null) }
 
-    // Material 3 date picker state
     var showMonthPicker by remember { mutableStateOf(false) }
 
-    // Load class details
     LaunchedEffect(classSectionId) {
         classViewModel.fetchClassSection(classSectionId)
         courseViewModel.fetchClassCourses(classSectionId)
     }
 
-    // Load attendance data for the selected month
     LaunchedEffect(classSectionId, selectedMonth) {
         attendanceViewModel.fetchClassAttendance(
             classSectionId = classSectionId,
-            date = selectedDate // Passing selected date instead
+            date = selectedDate
         )
     }
 
-    // Month picker dialog
     if (showMonthPicker) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = selectedDate.toEpochDay() * 24 * 60 * 60 * 1000
+        )
+
         DatePickerDialog(
             onDismissRequest = { showMonthPicker = false },
             confirmButton = {
-                TextButton(onClick = { showMonthPicker = false }) {
+                TextButton(
+                    onClick = {
+                        datePickerState.selectedDateMillis?.let { millis ->
+                            val selectedDay = millis / (24 * 60 * 60 * 1000)
+                            val newDate = LocalDate.ofEpochDay(selectedDay)
+                            selectedMonth = YearMonth.of(newDate.year, newDate.month)
+                            selectedDate = newDate
+                        }
+                        showMonthPicker = false
+                    }
+                ) {
                     Text("OK")
                 }
             },
@@ -83,28 +110,7 @@ fun ClassAttendanceScreen(
                 }
             }
         ) {
-            DatePicker(
-                state = rememberDatePickerState(
-                    initialSelectedDateMillis = selectedDate.toEpochDay() * 24 * 60 * 60 * 1000
-                )
-            )
-
-            // Add a separate button for handling month selection
-            Button(
-                onClick = {
-                    val selectedMillis = rememberDatePickerState().selectedDateMillis
-                    if (selectedMillis != null) {
-                        val selectedDay = selectedMillis / (24 * 60 * 60 * 1000)
-                        val newDate = LocalDate.ofEpochDay(selectedDay)
-                        selectedMonth = YearMonth.of(newDate.year, newDate.month)
-                        selectedDate = newDate
-                    }
-                    showMonthPicker = false
-                },
-                modifier = Modifier.padding(top = 8.dp)
-            ) {
-                Text("Select Month")
-            }
+            DatePicker(state = datePickerState)
         }
     }
 
@@ -152,7 +158,6 @@ fun ClassAttendanceScreen(
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            // Month and Course Selection
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -166,7 +171,6 @@ fun ClassAttendanceScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Course Tabs
             if (courses.isNotEmpty()) {
                 CourseTabs(
                     courses = courses,
@@ -179,7 +183,6 @@ fun ClassAttendanceScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Attendance Calendar or List
             if (loading) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -195,15 +198,9 @@ fun ClassAttendanceScreen(
                     Text("Error: $error")
                 }
             } else if (selectedViewType == "calendar") {
-                // Calendar View
-                val convertedAttendanceData = classAttendanceData.mapKeys {
-                    // Convert Java LocalDate keys to ThreeTenBP LocalDate
-                    it.key.toThreetenLocalDate()
-                }
-
                 ClassAttendanceCalendar(
                     yearMonth = selectedMonth,
-                    attendanceData = convertedAttendanceData,
+                    attendanceData = classAttendanceData,
                     onDateSelected = { date ->
                         selectedDate = date
                         if (selectedCourseId != null) {
@@ -214,14 +211,8 @@ fun ClassAttendanceScreen(
                     }
                 )
             } else {
-                // List View
-                val convertedAttendanceData = classAttendanceData.mapKeys {
-                    // Convert Java LocalDate keys to ThreeTenBP LocalDate
-                    it.key.toThreetenLocalDate()
-                }
-
                 AttendanceListView(
-                    attendanceData = convertedAttendanceData,
+                    attendanceData = classAttendanceData,
                     onDateSelected = { date ->
                         selectedDate = date
                         if (selectedCourseId != null) {

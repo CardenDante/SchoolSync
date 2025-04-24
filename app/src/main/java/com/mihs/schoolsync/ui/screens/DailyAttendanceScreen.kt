@@ -50,10 +50,22 @@ fun DailyAttendanceScreen(
 
     // Date picker dialog
     if (showCalendar) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = selectedDate.toEpochDay() * 24 * 60 * 60 * 1000
+        )
+
         DatePickerDialog(
             onDismissRequest = { showCalendar = false },
             confirmButton = {
-                TextButton(onClick = { showCalendar = false }) {
+                TextButton(
+                    onClick = {
+                        datePickerState.selectedDateMillis?.let { millis ->
+                            val selectedDay = millis / (24 * 60 * 60 * 1000)
+                            selectedDate = LocalDate.ofEpochDay(selectedDay)
+                        }
+                        showCalendar = false
+                    }
+                ) {
                     Text("OK")
                 }
             },
@@ -63,26 +75,7 @@ fun DailyAttendanceScreen(
                 }
             }
         ) {
-            DatePicker(
-                state = rememberDatePickerState(
-                    initialSelectedDateMillis = selectedDate.toEpochDay() * 24 * 60 * 60 * 1000
-                )
-            )
-
-            // Add a separate button for handling date selection
-            Button(
-                onClick = {
-                    val selectedMillis = rememberDatePickerState().selectedDateMillis
-                    if (selectedMillis != null) {
-                        val selectedDay = selectedMillis / (24 * 60 * 60 * 1000)
-                        selectedDate = LocalDate.ofEpochDay(selectedDay)
-                    }
-                    showCalendar = false
-                },
-                modifier = Modifier.padding(top = 8.dp)
-            ) {
-                Text("Select Date")
-            }
+            DatePicker(state = datePickerState)
         }
     }
 

@@ -14,6 +14,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.mihs.schoolsync.ui.components.StudentSearchField
+import com.mihs.schoolsync.ui.components.toUiStudents
 import com.mihs.schoolsync.ui.viewmodel.AttendanceViewModel
 import com.mihs.schoolsync.ui.viewmodel.StudentViewModel
 import java.time.LocalTime
@@ -26,14 +27,17 @@ fun ManualCheckInScreen(
     attendanceViewModel: AttendanceViewModel = hiltViewModel(),
     studentViewModel: StudentViewModel = hiltViewModel()
 ) {
-    val students by studentViewModel.students.collectAsState() // Changed from searchResults
+
     val loading by attendanceViewModel.loading.collectAsState()
     val error by attendanceViewModel.error.collectAsState()
+    val studentDetails by studentViewModel.students.collectAsState()
+    val students = studentDetails.toUiStudents()
 
     var searchQuery by remember { mutableStateOf("") }
     var selectedStudentId by remember { mutableStateOf<Int?>(null) }
     var selectedStudentName by remember { mutableStateOf("") }
     var manualArrivalTime by remember { mutableStateOf("") }
+
 
     var showSuccessMessage by remember { mutableStateOf(false) }
     var checkInCompleted by remember { mutableStateOf(false) }

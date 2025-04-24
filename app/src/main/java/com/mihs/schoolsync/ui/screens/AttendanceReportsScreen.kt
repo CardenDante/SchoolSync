@@ -17,6 +17,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.mihs.schoolsync.ui.components.ClassDropdown
 import com.mihs.schoolsync.ui.components.CourseDropdown
 import com.mihs.schoolsync.ui.components.StudentSearchField
+import com.mihs.schoolsync.ui.components.toUiStudents
 import com.mihs.schoolsync.ui.viewmodel.AttendanceViewModel
 import com.mihs.schoolsync.ui.viewmodel.ClassViewModel
 import com.mihs.schoolsync.ui.viewmodel.CourseViewModel
@@ -36,11 +37,12 @@ fun AttendanceReportsScreen(
     studentViewModel: StudentViewModel = hiltViewModel()
 ) {
     val classes by classViewModel.classes.collectAsState()
-    val courses by courseViewModel.courses.collectAsState()
-    val students by studentViewModel.students.collectAsState() // Changed from searchResults
+    val courses by courseViewModel.courses.collectAsState() // Changed from searchResults
     val report by attendanceViewModel.attendanceReport.collectAsState()
     val loading by attendanceViewModel.loading.collectAsState()
     val error by attendanceViewModel.error.collectAsState()
+    val studentDetails by studentViewModel.students.collectAsState()
+    val students = studentDetails.toUiStudents()
 
     val scrollState = rememberScrollState()
 
@@ -71,12 +73,24 @@ fun AttendanceReportsScreen(
         }
     }
 
-    // Date picker dialogs
+    // Start date picker dialog
     if (showStartDatePicker) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = startDate.toEpochDay() * 24 * 60 * 60 * 1000
+        )
+
         DatePickerDialog(
             onDismissRequest = { showStartDatePicker = false },
             confirmButton = {
-                TextButton(onClick = { showStartDatePicker = false }) {
+                TextButton(
+                    onClick = {
+                        datePickerState.selectedDateMillis?.let { millis ->
+                            val selectedDay = millis / (24 * 60 * 60 * 1000)
+                            startDate = LocalDate.ofEpochDay(selectedDay)
+                        }
+                        showStartDatePicker = false
+                    }
+                ) {
                     Text("OK")
                 }
             },
@@ -86,35 +100,28 @@ fun AttendanceReportsScreen(
                 }
             }
         ) {
-            DatePicker(
-                state = rememberDatePickerState(
-                    initialSelectedDateMillis = startDate.toEpochDay() * 24 * 60 * 60 * 1000
-                ),
-                // Removed dateValidator and onChange parameters
-            )
-
-            // Add a separate button for handling date selection
-            Button(
-                onClick = {
-                    val selectedMillis = rememberDatePickerState().selectedDateMillis
-                    if (selectedMillis != null) {
-                        val selectedDay = selectedMillis / (24 * 60 * 60 * 1000)
-                        startDate = LocalDate.ofEpochDay(selectedDay)
-                    }
-                    showStartDatePicker = false
-                },
-                modifier = Modifier.padding(top = 8.dp)
-            ) {
-                Text("Select Date")
-            }
+            DatePicker(state = datePickerState)
         }
     }
 
+// End date picker dialog
     if (showEndDatePicker) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = endDate.toEpochDay() * 24 * 60 * 60 * 1000
+        )
+
         DatePickerDialog(
             onDismissRequest = { showEndDatePicker = false },
             confirmButton = {
-                TextButton(onClick = { showEndDatePicker = false }) {
+                TextButton(
+                    onClick = {
+                        datePickerState.selectedDateMillis?.let { millis ->
+                            val selectedDay = millis / (24 * 60 * 60 * 1000)
+                            endDate = LocalDate.ofEpochDay(selectedDay)
+                        }
+                        showEndDatePicker = false
+                    }
+                ) {
                     Text("OK")
                 }
             },
@@ -124,27 +131,7 @@ fun AttendanceReportsScreen(
                 }
             }
         ) {
-            DatePicker(
-                state = rememberDatePickerState(
-                    initialSelectedDateMillis = endDate.toEpochDay() * 24 * 60 * 60 * 1000
-                ),
-                // Removed dateValidator and onChange parameters
-            )
-
-            // Add a separate button for handling date selection
-            Button(
-                onClick = {
-                    val selectedMillis = rememberDatePickerState().selectedDateMillis
-                    if (selectedMillis != null) {
-                        val selectedDay = selectedMillis / (24 * 60 * 60 * 1000)
-                        endDate = LocalDate.ofEpochDay(selectedDay)
-                    }
-                    showEndDatePicker = false
-                },
-                modifier = Modifier.padding(top = 8.dp)
-            ) {
-                Text("Select Date")
-            }
+            DatePicker(state = datePickerState)
         }
     }
 

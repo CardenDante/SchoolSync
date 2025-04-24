@@ -11,14 +11,17 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.mihs.schoolsync.data.models.AttendanceStatus
 import com.mihs.schoolsync.ui.viewmodel.AttendanceViewModel
 import com.mihs.schoolsync.ui.viewmodel.StudentViewModel
+import com.mihs.schoolsync.utils.toJavaLocalDate
 import org.threeten.bp.LocalDate
 import org.threeten.bp.format.DateTimeFormatter
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StudentAttendanceScreen(
     studentId: Int,
@@ -26,36 +29,66 @@ fun StudentAttendanceScreen(
     attendanceViewModel: AttendanceViewModel = hiltViewModel(),
     studentViewModel: StudentViewModel = hiltViewModel()
 ) {
-    val student by studentViewModel.student.collectAsState()
+    // Get student detail from StudentViewModel's state
+    val studentDetailState by studentViewModel.studentDetailState.collectAsState()
+    val studentDetail = when (studentDetailState) {
+        is StudentViewModel.StudentDetailState.Success ->
+            (studentDetailState as StudentViewModel.StudentDetailState.Success).student
+        else -> null
+    }
+
     val attendance by attendanceViewModel.studentsAttendance.collectAsState()
     val loading by attendanceViewModel.loading.collectAsState()
     val error by attendanceViewModel.error.collectAsState()
+
+    // Get loading state from both ViewModels
+    val isLoading = loading || studentDetailState is StudentViewModel.StudentDetailState.Loading
+
+    // Get error from either ViewModel
+    val errorMessage = when {
+        error != null -> error
+        studentDetailState is StudentViewModel.StudentDetailState.Error ->
+            (studentDetailState as StudentViewModel.StudentDetailState.Error).message
+        else -> null
+    }
 
     var startDate by remember { mutableStateOf(LocalDate.now().minusDays(30)) }
     var endDate by remember { mutableStateOf(LocalDate.now()) }
     var showStartDatePicker by remember { mutableStateOf(false) }
     var showEndDatePicker by remember { mutableStateOf(false) }
 
-    // Initialize ThreeTenABP if not already done in Application class
-    // In a real app, this should be in your Application class
-    // AndroidThreeTen.init(context)
-
     // Load student details
     LaunchedEffect(studentId) {
-        studentViewModel.fetchStudent(studentId)
+        studentViewModel.getStudent(studentId)
     }
 
     // Load attendance data
     LaunchedEffect(studentId, startDate, endDate) {
-        attendanceViewModel.fetchStudentAttendance(studentId, startDate, endDate)
+        attendanceViewModel.fetchStudentAttendance(
+            studentId = studentId,
+            startDate = startDate.toJavaLocalDate(),
+            endDate = endDate.toJavaLocalDate()
+        )
     }
 
     // Start date picker dialog
     if (showStartDatePicker) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = startDate.toEpochDay() * 24 * 60 * 60 * 1000
+        )
+
         DatePickerDialog(
             onDismissRequest = { showStartDatePicker = false },
             confirmButton = {
-                TextButton(onClick = { showStartDatePicker = false }) {
+                TextButton(
+                    onClick = {
+                        datePickerState.selectedDateMillis?.let { millis ->
+                            val selectedDay = millis / (24 * 60 * 60 * 1000)
+                            startDate = LocalDate.ofEpochDay(selectedDay)
+                        }
+                        showStartDatePicker = false
+                    }
+                ) {
                     Text("OK")
                 }
             },
@@ -65,31 +98,28 @@ fun StudentAttendanceScreen(
                 }
             }
         ) {
-            DatePicker(
-                state = rememberDatePickerState(
-                    initialSelectedDateMillis = startDate.toEpochDay() * 24 * 60 * 60 * 1000,
-                    yearRange = IntRange(2020, LocalDate.now().year)
-                ),
-                dateValidator = { millis ->
-                    // Validate date is not after end date
-                    val date = LocalDate.ofEpochDay(millis / (24 * 60 * 60 * 1000))
-                    !date.isAfter(endDate)
-                },
-                onChange = { millis ->
-                    millis?.let {
-                        startDate = LocalDate.ofEpochDay(it / (24 * 60 * 60 * 1000))
-                    }
-                }
-            )
+            DatePicker(state = datePickerState)
         }
     }
 
-    // End date picker dialog
+// End date picker dialog
     if (showEndDatePicker) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = endDate.toEpochDay() * 24 * 60 * 60 * 1000
+        )
+
         DatePickerDialog(
             onDismissRequest = { showEndDatePicker = false },
             confirmButton = {
-                TextButton(onClick = { showEndDatePicker = false }) {
+                TextButton(
+                    onClick = {
+                        datePickerState.selectedDateMillis?.let { millis ->
+                            val selectedDay = millis / (24 * 60 * 60 * 1000)
+                            endDate = LocalDate.ofEpochDay(selectedDay)
+                        }
+                        showEndDatePicker = false
+                    }
+                ) {
                     Text("OK")
                 }
             },
@@ -99,22 +129,7 @@ fun StudentAttendanceScreen(
                 }
             }
         ) {
-            DatePicker(
-                state = rememberDatePickerState(
-                    initialSelectedDateMillis = endDate.toEpochDay() * 24 * 60 * 60 * 1000,
-                    yearRange = IntRange(2020, LocalDate.now().year)
-                ),
-                dateValidator = { millis ->
-                    // Validate date is not before start date
-                    val date = LocalDate.ofEpochDay(millis / (24 * 60 * 60 * 1000))
-                    !date.isBefore(startDate)
-                },
-                onChange = { millis ->
-                    millis?.let {
-                        endDate = LocalDate.ofEpochDay(it / (24 * 60 * 60 * 1000))
-                    }
-                }
-            )
+            DatePicker(state = datePickerState)
         }
     }
 
@@ -124,9 +139,9 @@ fun StudentAttendanceScreen(
                 title = {
                     Column {
                         Text("Student Attendance")
-                        if (student != null) {
+                        if (studentDetail != null) {
                             Text(
-                                text = student?.fullName ?: "",
+                                text = studentDetail.studentId,
                                 style = MaterialTheme.typography.bodyMedium
                             )
                         }
@@ -205,19 +220,19 @@ fun StudentAttendanceScreen(
             }
 
             // Attendance Records List
-            if (loading) {
+            if (isLoading) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator()
                 }
-            } else if (error != null) {
+            } else if (errorMessage != null) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("Error: $error")
+                    Text("Error: $errorMessage")
                 }
             } else if (attendance.isNotEmpty()) {
                 Text(

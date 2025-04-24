@@ -36,6 +36,9 @@ class StudentViewModel @Inject constructor(
     private val _documentsState = MutableStateFlow<DocumentsState>(DocumentsState.Idle)
     val documentsState: StateFlow<DocumentsState> = _documentsState.asStateFlow()
 
+    private val _students = MutableStateFlow<List<StudentDetail>>(emptyList())
+    val students: StateFlow<List<StudentDetail>> = _students.asStateFlow()
+
     fun getStudents(
         studentId: String? = null,
         status: String? = null,
@@ -60,6 +63,30 @@ class StudentViewModel @Inject constructor(
                     Result.Loading -> StudentListState.Loading
                 }
             } catch (e: Exception) {
+                _studentListState.value = StudentListState.Error("An unexpected error occurred: ${e.message}")
+            }
+        }
+    }
+    fun fetchStudents(query: String) {
+        viewModelScope.launch {
+            _studentListState.value = StudentListState.Loading
+            try {
+                val result = studentRepository.getStudents(studentId = query)
+                when (result) {
+                    is Result.Success -> {
+                        _students.value = result.data.items
+                        _studentListState.value = StudentListState.Success(result.data)
+                    }
+                    is Result.Error -> {
+                        _students.value = emptyList()
+                        _studentListState.value = StudentListState.Error(result.message)
+                    }
+                    Result.Loading -> {
+                        _studentListState.value = StudentListState.Loading
+                    }
+                }
+            } catch (e: Exception) {
+                _students.value = emptyList()
                 _studentListState.value = StudentListState.Error("An unexpected error occurred: ${e.message}")
             }
         }

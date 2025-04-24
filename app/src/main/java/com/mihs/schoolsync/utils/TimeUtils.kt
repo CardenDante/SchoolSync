@@ -1,4 +1,4 @@
-// Create a TimeUtils.kt file with conversion methods
+// TimeUtils.kt
 package com.mihs.schoolsync.utils
 
 import java.time.LocalDate as JavaLocalDate
