@@ -23,7 +23,8 @@ fun MainNavigation(
             DashboardScreen(
                 navController = navController,
                 onAttendanceClick = {
-                    navController.navigate(NavigationRoutes.Attendance.route)
+                    // Direct to attendance dashboard
+                    navController.navigate(AttendanceRoutes.DASHBOARD)
                 },
                 onStudentsClick = {
                     // Navigate to student list screen directly
@@ -113,19 +114,25 @@ fun MainNavigation(
             )
         }
 
-        // Placeholder module screens
+        // ATTENDANCE MODULE
+        // Map the base attendance route to Attendance Dashboard
         composable(NavigationRoutes.Attendance.route) {
-            AttendanceScreen(
-                onBackClick = { navController.popBackStack() }
+            // Use AttendanceDashboardScreen instead of placeholder
+            AttendanceDashboardScreen(
+                navigateToClassAttendance = { classSectionId ->
+                    navController.navigate(AttendanceRoutes.classAttendance(classSectionId))
+                },
+                navigateToReports = {
+                    navController.navigate(AttendanceRoutes.REPORTS)
+                }
             )
         }
 
-        // STUDENT MANAGEMENT ROUTES
-        // Replace the placeholder StudentsScreen with our actual student screens
+        // Add the attendance navigation graph
+        attendanceNavGraph(navController)
 
-        // Main Students Landing Page
+        // STUDENT MANAGEMENT ROUTES
         composable(NavigationRoutes.Students.route) {
-            // Integration point - this is where we'll show the student management landing page
             StudentListScreen(
                 onStudentClick = { studentId ->
                     navController.navigate(NavigationRoutes.StudentDetail.createRoute(studentId))
@@ -142,7 +149,6 @@ fun MainNavigation(
             )
         }
 
-        // Student List Screen (same as Students route, but listed explicitly)
         composable(NavigationRoutes.StudentList.route) {
             StudentListScreen(
                 onStudentClick = { studentId ->
@@ -160,7 +166,6 @@ fun MainNavigation(
             )
         }
 
-        // Student Detail Screen
         composable(
             route = NavigationRoutes.StudentDetail.route,
             arguments = listOf(
@@ -183,7 +188,6 @@ fun MainNavigation(
             )
         }
 
-        // Student Edit Screen
         composable(
             route = NavigationRoutes.StudentEdit.route,
             arguments = listOf(
@@ -203,7 +207,6 @@ fun MainNavigation(
             )
         }
 
-        // Student Status Update Screen
         composable(
             route = NavigationRoutes.StudentStatus.route,
             arguments = listOf(
@@ -223,7 +226,6 @@ fun MainNavigation(
             )
         }
 
-        // Add Student Screen
         composable(NavigationRoutes.StudentAdd.route) {
             AddStudentScreen(
                 onNavigateBack = {
@@ -236,7 +238,6 @@ fun MainNavigation(
             )
         }
 
-        // Student Filter Screen
         composable(NavigationRoutes.StudentFilter.route) {
             StudentFilterScreen(
                 initialFilters = StudentFilters(),

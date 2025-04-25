@@ -1,23 +1,17 @@
 package com.mihs.schoolsync.ui.screens
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -25,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.mihs.schoolsync.R
+import com.mihs.schoolsync.navigation.AttendanceRoutes
 import com.mihs.schoolsync.ui.components.*
 import com.mihs.schoolsync.ui.viewmodel.DashboardViewModel
 import java.time.LocalDate
@@ -53,6 +48,19 @@ fun DashboardScreen(
     val navigateToAddStudent: () -> Unit = onStudentsClick
 
     val navigateToStudentFilter: () -> Unit = onStudentsClick
+
+    // Define direct attendance navigation
+    val navigateToAttendanceDashboard: () -> Unit = {
+        navController.navigate(AttendanceRoutes.DASHBOARD)
+    }
+
+    val navigateToTodaysAttendance: () -> Unit = {
+        navController.navigate(AttendanceRoutes.DAILY)
+    }
+
+    val navigateToQrCheckIn: () -> Unit = {
+        navController.navigate(AttendanceRoutes.QR_CHECK_IN)
+    }
 
     if (showLogoutDialog) {
         AlertDialog(
@@ -180,7 +188,15 @@ fun DashboardScreen(
                     navigateToStudentList,
                     Modifier.weight(1f)
                 )
-                DashboardCard("Attendance", "Track attendance", Icons.Outlined.CheckCircle, MaterialTheme.colorScheme.secondary, onAttendanceClick, Modifier.weight(1f))
+                // Connect to attendance dashboard rather than placeholder
+                DashboardCard(
+                    "Attendance",
+                    "Track attendance",
+                    Icons.Outlined.CheckCircle,
+                    MaterialTheme.colorScheme.secondary,
+                    navigateToAttendanceDashboard,
+                    Modifier.weight(1f)
+                )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -203,13 +219,20 @@ fun DashboardScreen(
             QuickActionCard("Filter Students", Icons.Outlined.FilterList, navigateToStudentFilter)
             Spacer(modifier = Modifier.height(12.dp))
 
-            QuickActionCard("Take Attendance", Icons.Outlined.HowToReg, onAttendanceClick)
+            // Update the attendance quick action to use the Daily attendance route
+            QuickActionCard("Take Attendance", Icons.Outlined.HowToReg, navigateToTodaysAttendance)
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Add QR check-in option
+            QuickActionCard("QR Attendance Check-in", Icons.Outlined.QrCode, navigateToQrCheckIn)
             Spacer(modifier = Modifier.height(12.dp))
 
             QuickActionCard("Record Payment", Icons.Outlined.Payments, onFinancesClick)
             Spacer(modifier = Modifier.height(12.dp))
 
-            QuickActionCard("Generate Reports", Icons.Outlined.Assessment) {}
+            QuickActionCard("Generate Reports", Icons.Outlined.Assessment) {
+                navController.navigate(AttendanceRoutes.REPORTS)
+            }
 
             Spacer(modifier = Modifier.height(32.dp))
             OutlinedButton(
@@ -223,32 +246,6 @@ fun DashboardScreen(
             }
 
             Spacer(modifier = Modifier.height(24.dp))
-        }
-    }
-}
-
-@Composable
-fun QuickActionCard(
-    title: String,
-    icon: ImageVector,
-    onClick: () -> Unit
-) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(imageVector = icon, contentDescription = title, tint = MaterialTheme.colorScheme.primary)
-            Spacer(modifier = Modifier.width(16.dp))
-            Text(text = title, style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.weight(1f))
-            Icon(imageVector = Icons.Default.ArrowForward, contentDescription = "Go", tint = MaterialTheme.colorScheme.primary)
         }
     }
 }
