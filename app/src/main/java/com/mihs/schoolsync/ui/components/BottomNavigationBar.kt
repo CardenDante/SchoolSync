@@ -1,78 +1,104 @@
+// BottomNavigationBar.kt
 package com.mihs.schoolsync.ui.components
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBalance
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Dashboard
-import androidx.compose.material.icons.filled.People
-import androidx.compose.material.icons.filled.School
-import com.mihs.schoolsync.navigation.AttendanceRoutes
-import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavController
+import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.mihs.schoolsync.navigation.NavigationRoutes
+import com.mihs.schoolsync.ui.finance.navigation.FINANCE_ROUTE
 
-data class BottomNavItem(
-    val label: String,
-    val icon: ImageVector,
-    val route: String
-)
-
+/**
+ * Bottom navigation bar for the app
+ */
 @Composable
 fun BottomNavigationBar(navController: NavController) {
-    val items = listOf(
-        BottomNavItem("Dashboard", Icons.Default.Dashboard, NavigationRoutes.Dashboard.route),
-        BottomNavItem("Students", Icons.Default.People, NavigationRoutes.Students.route),
-        // Connect directly to attendance dashboard instead of the placeholder route
-        BottomNavItem("Attendance", Icons.Default.CheckCircle, AttendanceRoutes.DASHBOARD),
-        BottomNavItem("Courses", Icons.Default.School, NavigationRoutes.Courses.route),
-        BottomNavItem("Finance", Icons.Default.AccountBalance, NavigationRoutes.Finances.route)
-    )
+    // Update to use BottomNavWithFinance if needed
+    // or keep this implementation
 
-    // Get current route to highlight the selected item
     val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
+    val currentDestination = navBackStackEntry?.destination
 
     NavigationBar {
-        items.forEach { item ->
-            // Check if this nav item matches the current route
-            val selected = when (item.route) {
-                AttendanceRoutes.DASHBOARD -> {
-                    // Consider selected for any attendance route
-                    currentRoute == item.route ||
-                            (currentRoute?.startsWith("attendance/") == true)
-                }
-                else -> {
-                    // Standard route matching for other items
-                    currentRoute == item.route ||
-                            (currentRoute?.startsWith(item.route.substringBefore("/")) == true)
+        // Dashboard Item
+        NavigationBarItem(
+            icon = { Icon(Icons.Default.Dashboard, contentDescription = "Dashboard") },
+            label = { Text("Dashboard") },
+            selected = currentDestination?.hierarchy?.any { it.route == NavigationRoutes.Dashboard.route } == true,
+            onClick = {
+                if (currentDestination?.route != NavigationRoutes.Dashboard.route) {
+                    navController.navigate(NavigationRoutes.Dashboard.route) {
+                        popUpTo(navController.graph.startDestinationId)
+                        launchSingleTop = true
+                    }
                 }
             }
+        )
 
-            NavigationBarItem(
-                selected = selected,
-                onClick = {
-                    // Only navigate if we're not already on this route
-                    if (!selected) {
-                        navController.navigate(item.route) {
-                            // Pop up to the dashboard but not inclusive - keeps dashboard on the stack
-                            popUpTo(NavigationRoutes.Dashboard.route) {
-                                inclusive = false
-                            }
-                            // Avoid multiple copies of the same destination on the back stack
-                            launchSingleTop = true
-                        }
+        // Students Item
+        NavigationBarItem(
+            icon = { Icon(Icons.Default.Group, contentDescription = "Students") },
+            label = { Text("Students") },
+            selected = currentDestination?.hierarchy?.any { it.route == NavigationRoutes.StudentList.route } == true,
+            onClick = {
+                if (currentDestination?.route != NavigationRoutes.StudentList.route) {
+                    navController.navigate(NavigationRoutes.StudentList.route) {
+                        popUpTo(navController.graph.startDestinationId)
+                        launchSingleTop = true
                     }
-                },
-                icon = { Icon(item.icon, contentDescription = item.label) },
-                label = { Text(item.label) }
-            )
-        }
+                }
+            }
+        )
+
+        // Attendance Item
+        NavigationBarItem(
+            icon = { Icon(Icons.Default.CheckCircle, contentDescription = "Attendance") },
+            label = { Text("Attendance") },
+            selected = currentDestination?.hierarchy?.any { it.route == NavigationRoutes.Attendance.route } == true,
+            onClick = {
+                if (currentDestination?.route != NavigationRoutes.Attendance.route) {
+                    navController.navigate(NavigationRoutes.Attendance.route) {
+                        popUpTo(navController.graph.startDestinationId)
+                        launchSingleTop = true
+                    }
+                }
+            }
+        )
+
+        // Finance Item
+        NavigationBarItem(
+            icon = { Icon(Icons.Default.AttachMoney, contentDescription = "Finance") },
+            label = { Text("Finance") },
+            selected = currentDestination?.hierarchy?.any { it.route?.startsWith(FINANCE_ROUTE) == true } == true,
+            onClick = {
+                if (currentDestination?.route != FINANCE_ROUTE) {
+                    navController.navigate(FINANCE_ROUTE) {
+                        popUpTo(navController.graph.startDestinationId)
+                        launchSingleTop = true
+                    }
+                }
+            }
+        )
+
+        // Profile Item
+        NavigationBarItem(
+            icon = { Icon(Icons.Default.Person, contentDescription = "Profile") },
+            label = { Text("Profile") },
+            selected = currentDestination?.hierarchy?.any { it.route == NavigationRoutes.UserProfile.route } == true,
+            onClick = {
+                if (currentDestination?.route != NavigationRoutes.UserProfile.route) {
+                    navController.navigate(NavigationRoutes.UserProfile.route) {
+                        popUpTo(navController.graph.startDestinationId)
+                        launchSingleTop = true
+                    }
+                }
+            }
+        )
     }
 }

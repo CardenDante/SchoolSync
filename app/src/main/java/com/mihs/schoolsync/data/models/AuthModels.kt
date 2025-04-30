@@ -36,7 +36,12 @@ data class UserResponse(
     @SerializedName("is_verified")
     val isVerified: Boolean,
     val roles: List<String>
-)
+) {
+    val role: Any
+        get() {
+            TODO()
+        }
+}
 
 data class RegisterRequest(
     val username: String,

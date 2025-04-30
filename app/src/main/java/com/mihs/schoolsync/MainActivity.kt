@@ -1,3 +1,4 @@
+// MainActivity.kt (updated)
 package com.mihs.schoolsync
 
 import android.os.Bundle
@@ -13,16 +14,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.rememberNavController
 import com.mihs.schoolsync.navigation.AuthNavigation
 import com.mihs.schoolsync.navigation.MainNavigation
 import com.mihs.schoolsync.ui.theme.SchoolSyncTheme
 import com.mihs.schoolsync.ui.viewmodel.AuthViewModel
+import com.mihs.schoolsync.ui.viewmodel.StudentViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    // Use this instead:
+    // Use this instead for activity-level ViewModels
     private val authViewModel: AuthViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,6 +39,9 @@ class MainActivity : ComponentActivity() {
                     var isAuthenticated by remember { mutableStateOf(false) }
                     val navController = rememberNavController()
 
+                    // Get ViewModels for student management
+                    val studentViewModel: StudentViewModel = hiltViewModel()
+
                     // Check authentication status
                     LaunchedEffect(key1 = Unit) {
                         isAuthenticated = authViewModel.isUserLoggedIn()
@@ -47,13 +53,17 @@ class MainActivity : ComponentActivity() {
                             onLogout = {
                                 authViewModel.logout()
                                 isAuthenticated = false
-                            }
+                            },
+                            authViewModel = authViewModel,
+                            studentViewModel = studentViewModel
                         )
                     } else {
                         AuthNavigation(
                             onAuthSuccess = {
                                 isAuthenticated = true
-                            }
+                            },
+                            navController = navController,
+                            authViewModel = authViewModel
                         )
                     }
                 }

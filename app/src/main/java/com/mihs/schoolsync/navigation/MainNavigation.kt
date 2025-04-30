@@ -1,3 +1,4 @@
+// MainNavigation.kt
 package com.mihs.schoolsync.navigation
 
 import androidx.compose.runtime.Composable
@@ -9,11 +10,17 @@ import androidx.navigation.navArgument
 import com.mihs.schoolsync.ui.screens.*
 import com.mihs.schoolsync.ui.screens.user.*
 import com.mihs.schoolsync.ui.screens.student.*
+import com.mihs.schoolsync.ui.finance.navigation.FINANCE_ROUTE
+import com.mihs.schoolsync.ui.finance.navigation.updatedFinanceNavigation
+import com.mihs.schoolsync.ui.viewmodel.AuthViewModel
+import com.mihs.schoolsync.ui.viewmodel.StudentViewModel
 
 @Composable
 fun MainNavigation(
     navController: NavHostController,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    authViewModel: AuthViewModel,
+    studentViewModel: StudentViewModel
 ) {
     NavHost(
         navController = navController,
@@ -34,7 +41,8 @@ fun MainNavigation(
                     navController.navigate(NavigationRoutes.Courses.route)
                 },
                 onFinancesClick = {
-                    navController.navigate(NavigationRoutes.Finances.route)
+                    // Navigate to finance dashboard
+                    navController.navigate(FINANCE_ROUTE)
                 },
                 onProfileClick = {
                     navController.navigate(NavigationRoutes.UserProfile.route)
@@ -259,15 +267,12 @@ fun MainNavigation(
             )
         }
 
-        composable(NavigationRoutes.Finances.route) {
-            FinancesScreen(
-                onBackClick = { navController.popBackStack() }
-            )
-        }
+        // FINANCE MODULE - integrate the finance navigation
+        updatedFinanceNavigation(navController, authViewModel)
     }
 }
 
-// Update NavigationRoutes to include new student screens
+// Update NavigationRoutes to include Finance route
 sealed class NavigationRoutes(val route: String) {
     object Login : NavigationRoutes("login")
     object Register : NavigationRoutes("register")
@@ -275,7 +280,8 @@ sealed class NavigationRoutes(val route: String) {
     object Attendance : NavigationRoutes("attendance")
     object Students : NavigationRoutes("students")
     object Courses : NavigationRoutes("courses")
-    object Finances : NavigationRoutes("finances")
+    // Add the Finance route - points to the finance route
+    object Finances : NavigationRoutes(FINANCE_ROUTE)
 
     // User Management Routes
     object UserProfile : NavigationRoutes("user_profile")

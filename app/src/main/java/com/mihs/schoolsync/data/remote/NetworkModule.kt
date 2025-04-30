@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Qualifier
 import javax.inject.Singleton
 
-// Define qualifiers for the different instances
+// Keep existing qualifiers
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 annotation class BaseOkHttp
@@ -161,4 +161,21 @@ object NetworkModule {
     ): AttendanceApiService {
         return retrofit.create(AttendanceApiService::class.java)
     }
+
+    // NEW FEE MODULE API SERVICES
+    @Provides
+    @Singleton
+    fun provideFeeApiService(
+        @AuthRetrofit retrofit: Retrofit
+    ): FeeApiService {
+        return retrofit.create(FeeApiService::class.java)
+    }
+//
+//    @Provides
+//    @Singleton
+//    fun providePaymentApiService(
+//        @AuthRetrofit retrofit: Retrofit
+//    ): PaymentApiService {
+//        return retrofit.create(PaymentApiService::class.java)
+//    }
 }

@@ -95,7 +95,11 @@ dependencies {
     // DataStore for Preferences
     implementation("androidx.datastore:datastore-preferences:1.0.0")
 
+    implementation("io.coil-kt:coil-compose:2.4.0")
+    implementation("com.itextpdf:itext7-core:7.2.3")
+
     implementation ("androidx.compose.material:material-icons-extended:1.5.4")
+    implementation("androidx.compose.material3:material3:1.1.2")
 
     // QR code scanning
     implementation("com.journeyapps:zxing-android-embedded:4.3.0")

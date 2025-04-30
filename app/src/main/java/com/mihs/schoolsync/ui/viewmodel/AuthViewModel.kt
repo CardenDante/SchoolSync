@@ -60,7 +60,25 @@ class AuthViewModel @Inject constructor(
             }
         }
     }
+    fun isAdmin(): Boolean {
+        // Get current user from state
+        val user = _currentUser.value
 
+        // Check if user has admin role
+        // This implementation depends on your user model structure
+        // Adjust according to your actual user data fields
+        return user?.let {
+            // Check common role field names
+            val role = it.role?.toString()?.uppercase() ?: ""
+            val userType = it.userType?.toString()?.uppercase() ?: ""
+
+            // Return true if any role field indicates admin privileges
+            role.contains("ADMIN") ||
+                    userType.contains("ADMIN") ||
+                    role.contains("ADMINISTRATOR") ||
+                    userType == "STAFF"
+        } ?: false
+    }
     fun register(username: String, email: String, password: String, fullName: String) {
         viewModelScope.launch {
             _registerState.value = AuthState.Loading

@@ -7,11 +7,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.mihs.schoolsync.ui.screens.LoginScreen
 import com.mihs.schoolsync.ui.screens.RegisterScreen
+import com.mihs.schoolsync.ui.viewmodel.AuthViewModel
 
 @Composable
 fun AuthNavigation(
     navController: NavHostController = rememberNavController(),
-    onAuthSuccess: () -> Unit
+    onAuthSuccess: () -> Unit,
+    authViewModel: AuthViewModel
 ) {
     NavHost(
         navController = navController,
@@ -22,7 +24,8 @@ fun AuthNavigation(
                 onLoginSuccess = onAuthSuccess,
                 onRegisterClick = {
                     navController.navigate(NavigationRoutes.Register.route)
-                }
+                },
+                viewModel = authViewModel  // Pass the viewModel parameter
             )
         }
         composable(NavigationRoutes.Register.route) {
@@ -34,7 +37,8 @@ fun AuthNavigation(
                 },
                 onLoginClick = {
                     navController.popBackStack()
-                }
+                },
+                viewModel = authViewModel  // Pass the viewModel parameter
             )
         }
     }
