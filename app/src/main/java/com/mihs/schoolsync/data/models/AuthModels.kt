@@ -37,10 +37,8 @@ data class UserResponse(
     val isVerified: Boolean,
     val roles: List<String>
 ) {
-    val role: Any
-        get() {
-            TODO()
-        }
+    val role: String
+        get() = roles.firstOrNull() ?: ""
 }
 
 data class RegisterRequest(

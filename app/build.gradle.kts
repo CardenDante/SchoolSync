@@ -73,6 +73,7 @@ dependencies {
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
+    implementation("com.jakewharton.timber:timber:5.0.1")
 
     // Hilt Dependency Injection
     implementation("com.google.dagger:hilt-android:2.50")

@@ -1,7 +1,6 @@
 package com.mihs.schoolsync.ui.screens.user
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
@@ -13,16 +12,17 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.mihs.schoolsync.data.models.User
-import com.mihs.schoolsync.ui.components.ProfileAvatar
 import com.mihs.schoolsync.ui.viewmodel.UserViewModel
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,16 +71,57 @@ fun UserProfileScreen(
         ) {
             currentUser?.let { user ->
                 // Profile Header
-                ProfileHeader(user)
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                ) {
+                    // Avatar placeholder
+                    Box(
+                        modifier = Modifier
+                            .size(120.dp)
+                            .clip(CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = user.fullName.first().toString(),
+                            style = MaterialTheme.typography.headlineLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                // Information Cards
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    Text(
+                        text = user.fullName,
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold
                     )
+
+                    Text(
+                        text = user.email,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    // Simple row for roles
+                    Row(
+                        modifier = Modifier.padding(top = 8.dp),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = user.roles.joinToString(", ") { it.capitalize() },
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Personal Information Card
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp)
                 ) {
                     Column(
                         modifier = Modifier.padding(16.dp)
@@ -114,7 +155,7 @@ fun UserProfileScreen(
                         ProfileInfoItem(
                             icon = Icons.Default.Phone,
                             label = "Phone Number",
-                            value = user.phoneNumber ?: "Not provided"
+                            value = user.phoneNumber
                         )
 
                         ProfileInfoItem(
@@ -135,10 +176,7 @@ fun UserProfileScreen(
 
                 // Account Information Card
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(
                         modifier = Modifier.padding(16.dp)
@@ -170,6 +208,18 @@ fun UserProfileScreen(
                         )
 
                         ProfileInfoItem(
+                            icon = Icons.Default.SupervisorAccount,
+                            label = "Super User",
+                            value = if (user.isSuperuser) "Yes" else "No"
+                        )
+
+                        ProfileInfoItem(
+                            icon = Icons.Default.Fingerprint,
+                            label = "UUID",
+                            value = user.uuid
+                        )
+
+                        ProfileInfoItem(
                             icon = Icons.Default.CalendarToday,
                             label = "Created On",
                             value = formatDateString(user.createdAt)
@@ -182,12 +232,22 @@ fun UserProfileScreen(
                                 value = formatDateString(it)
                             )
                         }
+
+                        user.updatedAt?.let {
+                            ProfileInfoItem(
+                                icon = Icons.Default.Update,
+                                label = "Last Updated",
+                                value = formatDateString(it)
+                            )
+                        }
                     }
                 }
             } ?: run {
-                // Loading or error state
+                // Loading state
                 Box(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator()
@@ -198,43 +258,13 @@ fun UserProfileScreen(
 }
 
 @Composable
-fun ProfileHeader(user: User) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        ProfileAvatar(
-            name = user.fullName,
-            size = 120
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = user.fullName,
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold
-        )
-
-        Text(
-            text = user.email,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        Text(
-            text = user.userType.capitalize(),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.primary
-        )
-    }
-}
-
-@Composable
 fun ProfileInfoItem(
     icon: ImageVector,
     label: String,
-    value: String
+    value: String?
 ) {
+    val displayValue = value ?: "Not provided"
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -258,11 +288,16 @@ fun ProfileInfoItem(
             )
 
             Text(
-                text = value,
+                text = displayValue,
                 style = MaterialTheme.typography.bodyLarge
             )
         }
     }
+}
+
+// Extension function to capitalize first letter safely
+fun String?.capitalize(): String {
+    return this?.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() } ?: "Not provided"
 }
 
 // Helper function to format date strings
@@ -272,11 +307,14 @@ fun formatDateString(dateString: String): String {
         val date = LocalDateTime.ofInstant(instant, ZoneId.systemDefault())
         date.format(DateTimeFormatter.ofPattern("MMM d, yyyy h:mm a"))
     } catch (e: Exception) {
-        dateString
+        try {
+            // Try an alternative format if the first one fails
+            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")
+            val dateTime = LocalDateTime.parse(dateString, formatter)
+            dateTime.format(DateTimeFormatter.ofPattern("MMM d, yyyy h:mm a"))
+        } catch (e2: Exception) {
+            // If all parsing fails, return the original string
+            dateString
+        }
     }
-}
-
-// String extension to capitalize first letter
-fun String.capitalize(): String {
-    return this.replaceFirstChar { it.uppercase() }
 }

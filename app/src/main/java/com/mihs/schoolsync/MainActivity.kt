@@ -1,7 +1,9 @@
-// MainActivity.kt (updated)
+// MainActivity.kt (updated with hover event crash fix)
 package com.mihs.schoolsync
 
 import android.os.Bundle
+import android.util.Log
+import android.view.MotionEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -67,6 +69,25 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                 }
+            }
+        }
+    }
+
+    /**
+     * Override to catch and handle the hover event issue that causes crashes
+     * on some devices, particularly Xiaomi phones with MIUI.
+     */
+    override fun dispatchGenericMotionEvent(ev: MotionEvent): Boolean {
+        return try {
+            super.dispatchGenericMotionEvent(ev)
+        } catch (e: IllegalStateException) {
+            if (e.message?.contains("ACTION_HOVER_EXIT") == true) {
+                // Log the error but don't crash
+                Log.e("MainActivity", "Caught hover exit error", e)
+                true // Consume the event
+            } else {
+                // Re-throw other exceptions
+                throw e
             }
         }
     }
